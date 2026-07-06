@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vanilla Bedrock Enhanced - Dedicated Server</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+
+    <style>
+        /* === VARIABLES & RESET === */
+        :root {
+            --bg-dark: #121212;
+            --mc-panel-bg: rgba(20, 20, 20, 0.9);
+            --mc-border: #4a4a4a;
+            --mc-text: #e0e0e0;
+            --mc-title: #ffaa00;
+            --mc-green: #55ff55;
+            --mc-emerald: #55ff55;
+            --mc-blue: #5555ff;
+            --mc-red: #ff5555;
+            --mc-btn-bg: #7aa53b;
+            --mc-btn-shadow: #3b5119;
+            --mc-discord: #5865F2;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            font-family: 'VT323', monospace;
+            color: var(--mc-text);
+            background-color: var(--bg-dark);
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* === PRELOADER === */
+        #preloader {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        .loader-logo {
+            width: 120px;
+            margin-bottom: 20px;
+            animation: pulse-glow 1.5s infinite alternate;
+        }
+        .loading-text {
+            font-family: 'Press Start 2P', cursive;
+            color: var(--mc-green);
+            font-size: 14px;
+            animation: blink 1s infinite;
+        }
+        @keyframes pulse-glow {
+            0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(85,255,85,0.2)); }
+            100% { transform: scale(1.05); filter: drop-shadow(0 0 25px rgba(85,255,85,0.8)); }
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* === HEADER === */
+        .site-header {
+            position: absolute;
+            top: 20px; left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 100;
+            transition: transform 0.2s;
+        }
+        .site-header:hover { transform: scale(1.05) rotate(-2deg); }
+        .site-header img { width: 70px; filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5)); }
+        .site-header .brand {
+            font-family: 'Press Start 2P', cursive;
+            color: #fff;
+            font-size: 16px;
+            text-shadow: 2px 2px 0px #000;
+            line-height: 1.4;
+        }
+        .site-header .brand span { color: var(--mc-title); font-size: 10px; display: block; }
+
+        /* === LANGUAGE SWITCHER === */
+        .lang-switch {
+            position: absolute;
+            top: 20px; right: 20px;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid #fff;
+            padding: 5px;
+            display: flex;
+            gap: 5px;
+            z-index: 100;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+        }
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: #888;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .lang-btn.active { background: var(--mc-green); color: #000; }
+        .lang-btn:hover:not(.active) { color: #fff; }
+
+        /* === BACKGROUND === */
+        .bg-container {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: url('https://images.unsplash.com/photo-1607513746994-51f730a44832?q=80&w=1920&auto=format&fit=crop') center/cover no-repeat;
+            z-index: -1;
+            filter: brightness(0.35) saturate(1.2);
+        }
+
+        /* === TYPOGRAPHY === */
+        h1, h2, h3 { font-family: 'Press Start 2P', cursive; text-shadow: 3px 3px 0px #000; text-align: center; }
+        h2 { color: var(--mc-title); margin-bottom: 30px; font-size: 26px; }
+
+        /* === TOP TAGS & ALERTS === */
+        .top-tags {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .tag-badge {
+            background: rgba(85, 40, 10, 0.8);
+            border: 2px solid #8B4513;
+            color: var(--mc-title);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            padding: 8px 15px;
+            box-shadow: 2px 2px 0px #000;
+        }
+
+        .paid-alert {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 50, 0, 0.8);
+            border: 2px solid var(--mc-emerald);
+            padding: 10px 20px;
+            margin-bottom: 30px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            color: #fff;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.8);
+        }
+        .paid-alert span { color: var(--mc-emerald); font-size: 20px; }
+
+        /* === HERO SECTION === */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 100px 20px 40px 20px;
+        }
+        .hero-content {
+            transform: translate3d(0, 0, 0);
+            animation: floatUpDown 4s ease-in-out infinite;
+        }
+        @keyframes floatUpDown {
+            0%, 100% { transform: translate3d(0, 0, 0); }
+            50% { transform: translate3d(0, -10px, 0); }
+        }
+
+        .hero h1 {
+            font-size: 45px;
+            color: #fff;
+            margin-bottom: 10px;
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.8);
+        }
+        .hero .subtitle {
+            font-size: 24px;
+            color: #fff;
+            text-shadow: 2px 2px 0px #000;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        /* === SERVER STATUS BADGE === */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #555;
+            padding: 12px 25px;
+            margin-bottom: 30px;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.5);
+        }
+        .status-dot { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+        .status-dot.online { background-color: var(--mc-green); color: var(--mc-green); }
+        .status-dot.offline { background-color: var(--mc-red); color: var(--mc-red); }
+        .status-dot.loading { background-color: var(--mc-title); color: var(--mc-title); animation: blink 1s infinite; }
+        
+        .status-info { text-align: left; }
+        .status-label { font-family: 'Press Start 2P', cursive; font-size: 10px; color: #888; margin-bottom: 5px; }
+        .status-val { font-family: 'Press Start 2P', cursive; font-size: 14px; }
+        .status-val span { color: #fff; }
+        .player-count { color: var(--mc-title) !important; margin-left: 10px; }
+
+        /* === IP BOX & BUTTONS === */
+        .ip-container {
+            background: rgba(0, 0, 0, 0.8);
+            border: 4px solid #fff;
+            padding: 20px 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.6);
+            margin-bottom: 30px;
+        }
+        .ip-container:hover { border-color: var(--mc-title); transform: scale(1.02); }
+        .ip-text { font-family: 'Press Start 2P', cursive; font-size: 16px; line-height: 1.8; color: #fff; }
+        .ip-text span { color: var(--mc-title); }
+
+        .btn-group { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .btn {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            background-color: var(--mc-btn-bg);
+            border: 4px solid #000;
+            box-shadow: inset -4px -4px 0px var(--mc-btn-shadow), 4px 4px 0px rgba(0,0,0,0.5);
+            text-shadow: 2px 2px 0px #000;
+            transition: 0.1s;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .btn:active { box-shadow: inset 4px 4px 0px var(--mc-btn-shadow), 0px 0px 0px rgba(0,0,0,0.5); transform: translate(4px, 4px); }
+        .btn.discord { background-color: var(--mc-discord); --mc-btn-shadow: #3b45a5; }
+
+        /* === MAIN CONTAINER & ANIMATION === */
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+        
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s ease-out; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        .pixel-panel {
+            background: var(--mc-panel-bg);
+            border: 4px solid #000;
+            box-shadow: inset 4px 4px 0px rgba(255,255,255,0.05), inset -4px -4px 0px rgba(0,0,0,0.5), 8px 8px 0px rgba(0,0,0,0.5);
+            padding: 40px 30px;
+            margin-bottom: 60px;
+        }
+
+        /* === FEATURES GRID (CARDS) === */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 15px;
+        }
+
+        .feature-card {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #333;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            font-size: 22px;
+            transition: 0.2s;
+            border-left: 4px solid var(--mc-title);
+        }
+        .feature-card:hover { background: rgba(20, 20, 20, 0.9); border-color: var(--mc-green); transform: translateX(5px); }
+        
+        /* ICONS STYLING */
+        .mc-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, #333, #111);
+            border: 2px solid #555;
+            border-radius: 6px;
+            margin-right: 15px;
+            font-size: 24px;
+            box-shadow: 2px 2px 0px #000;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .dev-tag {
+            font-size: 16px;
+            color: var(--mc-title);
+            margin-left: 8px;
+            font-style: italic;
+        }
+
+        /* === GALLERY CAROUSEL & PINTEREST GRID === */
+        .gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .gallery-header h2 { margin-bottom: 0; }
+        
+        .btn-toggle {
+            background: #000;
+            border: 2px solid var(--mc-title);
+            color: var(--mc-title);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 3px 3px 0px rgba(0,0,0,0.5);
+        }
+        .btn-toggle:hover { background: var(--mc-title); color: #000; }
+
+        .carousel-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .carousel-track {
+            display: flex;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .carousel-track::-webkit-scrollbar { display: none; }
+        
+        .carousel-slide {
+            flex: 0 0 100%;
+            scroll-snap-align: center;
+            padding: 10px;
+            box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        /* === NEW SLIDE CONTENT (3:2 CONTAINER) === */
+        .slide-content {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 3/2; /* Ukuran dasar wajib 3:2 keseluruhan */
+            background: #111;
+            border: 2px solid #333;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.6);
+            overflow: hidden; /* Mencegah gambar & teks keluar dari rasio */
+            transition: transform 0.3s, border-color 0.3s;
+            cursor: pointer;
+        }
+
+        .slide-content:hover {
+            border-color: var(--mc-title);
+            transform: translateY(-5px);
+        }
+
+        /* Foto memenuhi kotak */
+        .slide-img {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            transition: transform 0.5s ease;
+        }
+
+        /* Efek Zoom halus saat hover kartu */
+        .slide-content:hover .slide-img {
+            transform: scale(1.08);
+        }
+
+        /* Teks overlay di bagian bawah foto */
+        .slide-info {
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%;
+            padding: 50px 30px 25px 30px; /* Padding ditingkatkan agar teks tidak menempel tepi */
+            /* Gradasi gelap ke transparan agar teks terbaca jelas */
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 45%, transparent 100%);
+            z-index: 2;
+            text-align: left;
+        }
+        
+        .slide-info h3 { 
+            font-size: 20px; /* UKURAN JUDUL DIPERBESAR (sebelumnya 16px) */
+            color: var(--mc-title); 
+            margin: 0; 
+            line-height: 1.4; 
+            text-align: left;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        /* Keterangan tersembunyi secara default */
+        .slide-info p { 
+            font-size: 18px; /* UKURAN TEKS KETERANGAN DIPERBESAR (sebelumnya 14px) */
+            color: #ddd; 
+            line-height: 1.5; 
+            margin: 0; 
+            max-height: 0; 
+            opacity: 0; 
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.4s ease, margin-top 0.4s ease;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+        
+        /* Munculkan keterangan saat kartunya di hover */
+        .slide-content:hover .slide-info p {
+            max-height: 120px; /* Max-height ditambah agar teks yang lebih besar cukup */
+            opacity: 1;
+            margin-top: 12px;
+        }
+        
+        /* Carousel Controls */
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.8);
+            border: 2px solid var(--mc-title);
+            color: var(--mc-title);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 20px;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            z-index: 10;
+            transition: 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.6);
+        }
+        .carousel-btn:hover { background: var(--mc-title); color: #000; }
+        .carousel-btn:active { transform: translateY(-50%) translate(2px, 2px); box-shadow: 0px 0px 0px rgba(0,0,0,0); }
+        .carousel-btn.prev { left: -20px; }
+        .carousel-btn.next { right: -20px; }
+        
+        .carousel-indicators { display: flex; justify-content: center; gap: 12px; margin-top: 15px; }
+        .indicator { width: 14px; height: 14px; background: #444; border: 2px solid #000; cursor: pointer; transition: 0.3s; }
+        .indicator.active { background: var(--mc-green); transform: scale(1.2); }
+
+        /* --- PINTEREST/GRID EXPANDED STATE --- */
+        .gallery-panel.expanded .carousel-wrapper { max-width: 100%; }
+        
+        .gallery-panel.expanded .carousel-track {
+            display: block;
+            column-count: 2;
+            column-gap: 20px;
+            overflow-x: visible;
+            scroll-snap-type: none;
+        }
+        
+        .gallery-panel.expanded .carousel-slide {
+            display: block;
+            width: 100%;
+            margin-bottom: 20px;
+            padding: 0;
+            break-inside: avoid;
+        }
+
+        /* Lepas paksaan 3:2 dan gunakan rasio unik di mode Grid */
+        .gallery-panel.expanded .slide-content {
+            aspect-ratio: auto;
+        }
+
+        /* Kelas Rasio Variatif dipindah ke slide-content (pembungkusnya) */
+        .gallery-panel.expanded .slide-content.grid-1-1 { aspect-ratio: 1/1; }
+        .gallery-panel.expanded .slide-content.grid-2-3 { aspect-ratio: 2/3; }
+        .gallery-panel.expanded .slide-content.grid-3-2 { aspect-ratio: 3/2; }
+
+        .gallery-panel.expanded .carousel-btn,
+        .gallery-panel.expanded .carousel-indicators { display: none; }
+
+        /* === SPECS INFOGRAPHIC === */
+        .specs-intro { font-size: 22px; text-align: center; margin-bottom: 40px; color: #ccc; max-width: 800px; margin-left: auto; margin-right: auto; }
+        .infographic-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        
+        .stat-box {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #444;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .stat-icon {
+            font-size: 40px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #555;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+        }
+        .stat-details { flex-grow: 1; }
+        .stat-title { font-family: 'Press Start 2P', cursive; font-size: 14px; color: var(--mc-green); margin-bottom: 8px; }
+        .stat-desc { font-size: 22px; color: #fff; line-height: 1.2; }
+        .stat-sub { font-size: 18px; color: #aaa; margin-top: 5px; }
+
+        /* === FOOTER === */
+        footer {
+            background: #000;
+            border-top: 4px solid #333;
+            padding: 40px 20px;
+        }
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .footer-block { text-align: center; font-size: 24px; color: #aaa; }
+        .footer-block strong { color: var(--mc-green); font-family: 'Press Start 2P', cursive; font-size: 14px; display: block; margin-top: 10px; }
+        
+        /* === RESPONSIVE MEDIA QUERIES === */
+        @media (max-width: 768px) {
+            .site-header { position: relative; top: 0; left: 0; justify-content: center; margin-top: 20px; }
+            .site-header img { width: 50px; }
+            .site-header .brand { font-size: 12px; }
+            .lang-switch { top: 10px; right: 10px; }
+            .hero h1 { font-size: 32px; }
+            .hero { padding-top: 60px; }
+            .ip-text { font-size: 12px; }
+            .btn { width: 100%; justify-content: center; }
+            .footer-content { flex-direction: column; text-align: center; }
+            .top-tags { display: none; }
+            .carousel-btn { display: none; } /* Hide prev/next buttons on mobile, allow swipe */
+            .gallery-header { flex-direction: column; text-align: center; }
+            
+            /* Pinterest Grid becomes 1 column on mobile */
+            .gallery-panel.expanded .carousel-track {
+                column-count: 1;
+            }
+            
+            /* Menyesuaikan ukuran teks galeri untuk layar kecil */
+            .slide-info h3 { font-size: 16px; }
+            .slide-info p { font-size: 14px; }
+            .slide-content:hover .slide-info p { max-height: 100px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PRELOADER -->
+    <div id="preloader">
+        <img src="logo.png" alt="Loading" class="loader-logo" onerror="this.src='https://minecraft.wiki/images/Grass_Block.png';">
+        <div class="loading-text tr" data-en="GENERATING WORLD..." data-es="GENERANDO MUNDO...">GENERATING WORLD...</div>
+    </div>
+
+    <!-- LANGUAGE SWITCHER -->
+    <div class="lang-switch">
+        <button class="lang-btn active" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" onclick="setLang('es')">ES</button>
+    </div>
+
+    <!-- PARALLAX BG -->
+    <div class="bg-container"></div>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <header class="site-header">
+            <img src="logo.png" alt="Logo" onerror="this.src='https://minecraft.wiki/images/Grass_Block.png';">
+            <div class="brand">
+                VANILLA BEDROCK
+                <span>ENHANCED</span>
+            </div>
+        </header>
+
+        <div class="hero-content">
+            <div class="top-tags">
+                <div class="tag-badge tr" data-en="SURVIVAL" data-es="SUPERVIVENCIA">SURVIVAL</div>
+                <div class="tag-badge tr" data-en="COMMUNITY" data-es="COMUNIDAD">COMMUNITY</div>
+                <div class="tag-badge tr" data-en="ADVENTURE" data-es="AVENTURA">ADVENTURE</div>
+                <div class="tag-badge tr" data-en="ECONOMY" data-es="ECONOMÍA">ECONOMY</div>
+            </div>
+
+            <h1 class="tr" data-en="VANILLA BEDROCK" data-es="BEDROCK VANILLA">VANILLA BEDROCK</h1>
+            <p class="subtitle tr" data-en="VANILLA SURVIVAL. ENHANCED EXPERIENCE." data-es="SUPERVIVENCIA VANILLA. EXPERIENCIA MEJORADA.">VANILLA SURVIVAL. ENHANCED EXPERIENCE.</p>
+
+            <div class="paid-alert">
+                <span>💎</span>
+                <div class="tr" data-en="PAID FOR UNTIL ~ JUNE 7TH 2027" data-es="PAGADO HASTA ~ 7 DE JUNIO DE 2027">PAID FOR UNTIL ~ JUNE 7TH 2027</div>
+            </div>
+
+            <div class="status-badge">
+                <div class="status-dot loading" id="status-dot"></div>
+                <div class="status-info">
+                    <div class="status-label tr" data-en="SERVER STATUS" data-es="ESTADO DEL SERVIDOR">SERVER STATUS</div>
+                    <div class="status-val">
+                        <span id="status-text" class="tr" data-en="CONNECTING..." data-es="CONECTANDO...">CONNECTING...</span> 
+                        <span id="player-count" class="player-count tr" data-en="" data-es=""></span>
+                    </div>
+                </div>
+            </div>
+
+            <br>
+
+            <div class="ip-container" onclick="copyIP()" id="ipBox" title="Click to copy IP!">
+                <div class="ip-text">
+                    <span class="tr" data-en="IP:" data-es="IP:">IP:</span> vanillaminecraft.dat.gg<br><br>
+                    PORT: <span>17475</span>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <a href="https://www.thevanillabedrock.online/" target="_blank" class="btn">
+                    🌐 <span class="tr" data-en="Visit Website" data-es="Visitar Sitio Web">Visit Website</span>
+                </a>
+                <a href="https://discord.gg/2yVmVFewJp" target="_blank" class="btn discord">
+                    🎮 <span class="tr" data-en="Join Discord" data-es="Unirse a Discord">Join Discord</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        
+        <!-- PANEL 1: SERVER FEATURES -->
+        <div class="pixel-panel reveal">
+            <h2 class="tr" data-en="SERVER FEATURES" data-es="CARACTERÍSTICAS DEL SERVIDOR">SERVER FEATURES</h2>
+            <div class="features-grid">
+                <div class="feature-card"><span class="mc-icon">📱</span> <span class="tr" data-en="Admin management with roles" data-es="Gestión de admins con roles">Admin management with roles</span></div>
+                <div class="feature-card"><span class="mc-icon">👥</span> <span class="tr" data-en="Player management" data-es="Gestión de jugadores">Player management</span></div>
+                <div class="feature-card"><span class="mc-icon">🌎</span> <span class="tr" data-en="World management" data-es="Gestión de mundos">World management</span></div>
+                <div class="feature-card"><span class="mc-icon">📝</span> <span class="tr" data-en="Registration system" data-es="Sistema de registro">Registration system</span></div>
+                <div class="feature-card"><span class="mc-icon">📢</span> <span class="tr" data-en="Repeated broadcast system" data-es="Sistema de anuncios repetidos">Repeated broadcast system</span></div>
+                <div class="feature-card"><span class="mc-icon">🏠</span> <span class="tr" data-en="Set home" data-es="Establecer hogar">Set home</span></div>
+                <div class="feature-card"><span class="mc-icon">🏞️</span> <span class="tr" data-en="Land claims" data-es="Reclamación de tierras">Land claims</span></div>
+                <div class="feature-card"><span class="mc-icon">💲</span> <span class="tr" data-en="Complex economic system" data-es="Sistema económico complejo">Complex economic system</span></div>
+                <div class="feature-card"><span class="mc-icon">🧑‍🤝‍🧑</span> <span class="tr" data-en="NPC management system" data-es="Gestión de NPCs">NPC management system</span></div>
+                <div class="feature-card"><span class="mc-icon">🧭</span> <span class="tr" data-en="Teleport between players" data-es="Teletransporte entre jugadores">Teleport between players</span></div>
+                <div class="feature-card"><span class="mc-icon">💵</span> <span class="tr" data-en="Buying and selling system" data-es="Sistema de compra y venta">Buying and selling system</span></div>
+                <div class="feature-card"><span class="mc-icon">❗</span> <span class="tr" data-en="Several slash commands" data-es="Varios comandos de barra">Several slash commands</span></div>
+                <div class="feature-card"><span class="mc-icon">📋</span> <span class="tr" data-en="Skill and rank system" data-es="Sistema de habilidades y rangos">Skill and rank system</span></div>
+                <div class="feature-card"><span class="mc-icon">🏷️</span> <span class="tr" data-en="Custom chat and custom nametag" data-es="Chat y etiquetas personalizadas">Custom chat and custom nametag</span></div>
+                <div class="feature-card"><span class="mc-icon">📊</span> <span class="tr" data-en="Sidebar" data-es="Barra lateral">Sidebar</span></div>
+                <div class="feature-card"><span class="mc-icon">📈</span> <span class="tr" data-en="Hologram + Leaderboard" data-es="Holograma + Tabla de clasificación">Hologram + Leaderboard</span></div>
+                <div class="feature-card"><span class="mc-icon">🤝</span> <span class="tr" data-en="Clan system" data-es="Sistema de clanes">Clan system</span></div>
+                <div class="feature-card"><span class="mc-icon">⚔️</span> <span class="tr" data-en="Battle System" data-es="Sistema de Batalla">Battle System</span></div>
+                <div class="feature-card"><span class="mc-icon">📜</span> <span class="tr" data-en="Redeem, Daily Reward, Starterkit, Job, Quest, and many more." data-es="Canjes, Recompensa Diaria, Kit Inicial, Trabajos, Misiones y más.">Redeem, Daily Reward, Starterkit, Job, Quest, and many more.</span></div>
+            </div>
+        </div>
+
+        <!-- PANEL 2: GAME SETTINGS & RULES -->
+        <div class="pixel-panel reveal">
+            <h2 class="tr" data-en="GAME SETTINGS & RULES" data-es="AJUSTES Y REGLAS DEL JUEGO">GAME SETTINGS & RULES</h2>
+            <div class="features-grid">
+                <div class="feature-card"><span class="mc-icon">🌐</span> <span class="tr" data-en="Coordinates" data-es="Coordenadas">Coordinates</span></div>
+                <div class="feature-card"><span class="mc-icon">🗒️</span> <span class="tr" data-en="Recipe Unlocking" data-es="Desbloqueo de Recetas">Recipe Unlocking</span></div>
+                <div class="feature-card"><span class="mc-icon">🔥</span> <span class="tr" data-en="Fire Spreads" data-es="Fuego se propaga">Fire Spreads</span></div>
+                <div class="feature-card"><span class="mc-icon">🧨</span> <span class="tr" data-en="TNT Explodes" data-es="TNT Explota">TNT Explodes</span></div>
+                <div class="feature-card"><span class="mc-icon">🧟</span> <span class="tr" data-en="Mob Loot" data-es="Botín de Mobs">Mob Loot</span></div>
+                <div class="feature-card"><span class="mc-icon">🍖</span> <span class="tr" data-en="Natural Regeneration" data-es="Regeneración Natural">Natural Regeneration</span></div>
+                <div class="feature-card"><span class="mc-icon">⚒️</span> <span class="tr" data-en="Tile Drops" data-es="Soltar Bloques">Tile Drops</span></div>
+                <div class="feature-card"><span class="mc-icon">🛌</span> <span class="tr" data-en="1 Person Sleeping" data-es="Dormir 1 Persona">1 Person Sleeping</span></div>
+                <div class="feature-card"><span class="mc-icon">❤️</span> <span class="tr" data-en="Immediate Respawn" data-es="Reaparición Inmediata">Immediate Respawn</span></div>
+                <div class="feature-card"><span class="mc-icon">💥</span> <span class="tr" data-en="Respawn Blocks Explode" data-es="Bloques de reaparición explotan">Respawn Blocks Explode</span></div>
+                <div class="feature-card"><span class="mc-icon">🥊</span> <span class="tr" data-en="Friendly Fire" data-es="Fuego Amigo">Friendly Fire</span></div>
+                <div class="feature-card"><span class="mc-icon">🚫</span> <span class="tr" data-en="No Locator Bar" data-es="Sin Barra Localizadora">No Locator Bar</span></div>
+            </div>
+        </div>
+
+        <!-- PANEL 3: GALLERY (CAROUSEL + GRID) -->
+        <div class="pixel-panel reveal gallery-panel" id="gallery-panel">
+            <div class="gallery-header">
+                <h2 class="tr" data-en="SERVER GALLERY" data-es="GALERÍA DEL SERVIDOR">SERVER GALLERY</h2>
+                <button id="toggle-gallery" class="btn-toggle tr" data-en="🖼️ EXPAND GRID" data-es="🖼️ EXPANDIR RED">🖼️ EXPAND GRID</button>
+            </div>
+            
+            <div class="carousel-wrapper">
+                <button class="carousel-btn prev" id="carousel-prev">&#10094;</button>
+                
+                <div class="carousel-track" id="carousel-track">
+                    
+                    <!-- ITEM 1: Lobby -->
+                    <div class="carousel-slide">
+                        <div class="slide-content grid-3-2">
+                            <img src="photo1.png" alt="Server Lobby" class="slide-img">
+                            <div class="slide-info">
+                                <h3 class="tr" data-en="MAIN LOBBY" data-es="VESTÍBULO PRINCIPAL">MAIN LOBBY</h3>
+                                <p class="tr" data-en="The central hub of our server. Create your character and start your adventure!" data-es="El centro neurálgico de nuestro servidor. ¡Crea tu personaje y comienza tu aventura!">The central hub of our server. Create your character and start your adventure!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ITEM 2: Nexus -->
+                    <div class="carousel-slide">
+                        <div class="slide-content grid-1-1">
+                            <img src="photo2.png" alt="The Elderwood Nexus" class="slide-img">
+                            <div class="slide-info">
+                                <h3 class="tr" data-en="THE ELDERWOOD NEXUS" data-es="EL NEXO ELDERWOOD">THE ELDERWOOD NEXUS</h3>
+                                <p class="tr" data-en="Home of the 5 Guilds: Warriors, Builders, Redstonists, Mages & Griefers." data-es="Hogar de los 5 Gremios: Guerreros, Constructores, Redstoners, Magos y Griefers.">Home of the 5 Guilds: Warriors, Builders, Redstonists, Mages & Griefers.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ITEM 3: City Map -->
+                    <div class="carousel-slide">
+                        <div class="slide-content grid-1-1">
+                            <img src="photo3.png" alt="The City Of Alyria" class="slide-img">
+                            <div class="slide-info">
+                                <h3 class="tr" data-en="THE CITY OF ALYRIA" data-es="LA CIUDAD DE ALYRIA">THE CITY OF ALYRIA</h3>
+                                <p class="tr" data-en="The grand map showcasing the magnificent structures built by our community." data-es="El gran mapa que muestra las magníficas estructuras construidas por nuestra comunidad.">The grand map showcasing the magnificent structures built by our community.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ITEM 4: The Station -->
+                    <div class="carousel-slide">
+                        <div class="slide-content grid-3-2">
+                            <img src="photo4.png" alt="Station Hub Features" class="slide-img">
+                            <div class="slide-info">
+                                <h3 class="tr" data-en="STATION HUB FEATURES" data-es="FUNCIONES DE LA ESTACIÓN">STATION HUB FEATURES</h3>
+                                <p class="tr" data-en="Special warp area, city railroads, teleport system, and the main Nether hub." data-es="Área especial de warp, ferrocarriles, sistema de teletransporte y el centro principal del Nether.">Special warp area, city railroads, teleport system, and the main Nether hub.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ITEM 5: Solwood Island -->
+                    <div class="carousel-slide">
+                        <div class="slide-content grid-2-3">
+                            <img src="photo5.png" alt="Solwood Island" class="slide-img">
+                            <div class="slide-info">
+                                <h3 class="tr" data-en="SOLWOOD ISLAND" data-es="ISLA SOLWOOD">SOLWOOD ISLAND</h3>
+                                <p class="tr" data-en="Enjoy a peaceful stay and discover the mysteries of the ancient Solwood Tree." data-es="Disfruta de una estancia pacífica y descubre los misterios del antiguo Árbol Solwood.">Enjoy a peaceful stay and discover the mysteries of the ancient Solwood Tree.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ITEM 6: Lore & Records -->
+                    <div class="carousel-slide">
+                        <div class="slide-content grid-2-3">
+                            <img src="photo6.png" alt="Lore & Records" class="slide-img">
+                            <div class="slide-info">
+                                <h3 class="tr" data-en="DEEP LORE & RECORDS" data-es="HISTORIA Y REGISTROS">DEEP LORE & RECORDS</h3>
+                                <p class="tr" data-en="Player-made exclusive content, deep lore integration, and vital server info." data-es="Contenido exclusivo de jugadores, profunda integración de la historia e información vital.">Player-made exclusive content, deep lore integration, and vital server info.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ITEM 7: Marketplace & Auctions -->
+                    <div class="carousel-slide">
+                        <div class="slide-content grid-1-1">
+                            <img src="photo7.png" alt="Marketplace & Auctions" class="slide-img">
+                            <div class="slide-info">
+                                <h3 class="tr" data-en="MARKETPLACE & AUCTIONS" data-es="MERCADO Y SUBASTAS">MARKETPLACE & AUCTIONS</h3>
+                                <p class="tr" data-en="Player shops, auction house, and command-block stores. Buy, sell, and trade!" data-es="Tiendas de jugadores, casa de subastas y tiendas de comandos. ¡Compra, vende y cambia!">Player shops, auction house, and command-block stores. Buy, sell, and trade!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ITEM 8: Skyreach Clans -->
+                    <div class="carousel-slide">
+                        <div class="slide-content grid-2-3">
+                            <img src="photo8.png" alt="Skyreach Clans" class="slide-img">
+                            <div class="slide-info">
+                                <h3 class="tr" data-en="SKYREACH CLANS" data-es="CLANES SKYREACH">SKYREACH CLANS</h3>
+                                <p class="tr" data-en="Join clans, complete quests, and participate in minigames. More coming soon!" data-es="Únete a clanes, completa misiones y participa en minijuegos. ¡Más próximamente!">Join clans, complete quests, and participate in minigames. More coming soon!</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ITEM 9: Forgotten Ruins -->
+                    <div class="carousel-slide">
+                        <div class="slide-content grid-1-1">
+                            <img src="photo9.png" alt="Forgotten Ruins" class="slide-img">
+                            <div class="slide-info">
+                                <h3 class="tr" data-en="FORGOTTEN RUINS" data-es="RUINAS OLVIDADAS">FORGOTTEN RUINS</h3>
+                                <p class="tr" data-en="The Abandoned Castle is waiting for your discovery. Are you brave enough?" data-es="El Castillo Abandonado espera tu descubrimiento. ¿Eres lo suficientemente valiente?">The Abandoned Castle is waiting for your discovery. Are you brave enough?</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ITEM 10: Aly's Welcome -->
+                    <div class="carousel-slide">
+                        <div class="slide-content grid-1-1">
+                            <img src="photo10.png" alt="Aly's Welcome" class="slide-img">
+                            <div class="slide-info">
+                                <h3 class="tr" data-en="ALY'S TREEHOUSE" data-es="CASA DEL ÁRBOL DE ALY">ALY'S TREEHOUSE</h3>
+                                <p class="tr" data-en="Friends and family are always welcome at Aly's magnificent Treehouse!" data-es="¡Los amigos y familiares siempre son bienvenidos en la Casa del Árbol de Aly!">Friends and family are always welcome at Aly's magnificent Treehouse!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <button class="carousel-btn next" id="carousel-next">&#10095;</button>
+            </div>
+
+            <div class="carousel-indicators" id="carousel-indicators">
+                <div class="indicator active"></div>
+                <div class="indicator"></div>
+                <div class="indicator"></div>
+                <div class="indicator"></div>
+                <div class="indicator"></div>
+                <div class="indicator"></div> 
+                <div class="indicator"></div>
+                <div class="indicator"></div>
+                <div class="indicator"></div>
+                <div class="indicator"></div>
+            </div>
+        </div>
+
+        <!-- PANEL 4: SERVER SPECS -->
+        <div class="pixel-panel reveal">
+            <h2 class="tr" data-en="SERVER SPECS" data-es="ESPECIFICACIONES">SERVER SPECS</h2>
+            <p class="specs-intro tr" data-en="Enterprise-grade, high performance hardware explicitly optimized for lag-free gaming. No throttle or limit CPU/RAM usage." data-es="Hardware de nivel empresarial, alto rendimiento optimizado explícitamente para jugar sin lag. Sin límites de uso de CPU/RAM.">
+                Enterprise-grade, high performance hardware explicitly optimized for lag-free gaming. No throttle or limit CPU/RAM usage.
+            </p>
+
+            <div class="infographic-grid">
+                <div class="stat-box">
+                    <div class="stat-icon">⚙️</div>
+                    <div class="stat-details">
+                        <div class="stat-title">CPU</div>
+                        <div class="stat-desc">AMD Ryzen 9</div>
+                        <div class="stat-sub">7950X3D</div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-icon">🧠</div>
+                    <div class="stat-details">
+                        <div class="stat-title">RAM</div>
+                        <div class="stat-desc">16GB DDR5 ECC</div>
+                        <div class="stat-sub tr" data-en="(zero usage limits)" data-es="(sin límites de uso)">(zero usage limits)</div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-icon">💾</div>
+                    <div class="stat-details">
+                        <div class="stat-title">STORAGE</div>
+                        <div class="stat-desc">30GB NVMe SSD</div>
+                        <div class="stat-sub tr" data-en="(upgradeable)" data-es="(ampliable)">(upgradeable)</div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-icon">🌍</div>
+                    <div class="stat-details">
+                        <div class="stat-title">NETWORK</div>
+                        <div class="stat-desc">10Gbps Uplink</div>
+                        <div class="stat-sub">w/ DDoS Protection</div>
+                    </div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-icon">📍</div>
+                    <div class="stat-details">
+                        <div class="stat-title">LOCATION</div>
+                        <div class="stat-desc">New York</div>
+                        <div class="stat-sub">USA</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-block">
+                <span class="tr" data-en="BUILT FOR PLAYERS." data-es="CONSTRUIDO PARA JUGADORES.">BUILT FOR PLAYERS.</span><br>
+                <span class="tr" data-en="MADE FOR COMMUNITY." data-es="HECHO PARA LA COMUNIDAD.">MADE FOR COMMUNITY.</span>
+            </div>
+            
+            <div class="footer-block">
+                <img src="logo.png" alt="Icon" width="50" style="filter: grayscale(100%); opacity: 0.5; margin-bottom: 10px;" onerror="this.style.display='none';">
+                <strong class="tr" data-en="JOIN TODAY!" data-es="¡ÚNETE HOY!">JOIN TODAY!</strong>
+                <span style="font-size: 16px;">vanillaminecraft.dat.gg:17475</span>
+            </div>
+
+            <div class="footer-block">
+                <span class="tr" data-en="SURVIVE. BUILD." data-es="SOBREVIVE. CONSTRUYE.">SURVIVE. BUILD.</span><br>
+                <strong class="tr" data-en="THRIVE TOGETHER." data-es="PROSPEREN JUNTOS.">THRIVE TOGETHER.</strong>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        /* === 1. Preloader === */
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const preloader = document.getElementById('preloader');
+                preloader.style.opacity = '0';
+                setTimeout(() => { preloader.style.display = 'none'; }, 500);
+            }, 1000);
+        });
+
+        /* === 2. Language Switcher === */
+        let currentLang = 'en';
+        function setLang(lang) {
+            currentLang = lang;
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            changeLang(lang);
+        }
+        function changeLang(lang) {
+            document.querySelectorAll('.tr').forEach(el => {
+                if (el.getAttribute(`data-${lang}`)) {
+                    el.innerHTML = el.getAttribute(`data-${lang}`);
+                }
+            });
+            const statusText = document.getElementById('status-text');
+            if(statusText.innerHTML.includes('CONNECTING') || statusText.innerHTML.includes('CONECTANDO')) {
+                statusText.innerHTML = lang === 'en' ? 'CONNECTING...' : 'CONECTANDO...';
+            }
+        }
+
+        /* === 3. Copy IP === */
+        function copyIP() {
+            const copyText = "vanillaminecraft.dat.gg:17475";
+            navigator.clipboard.writeText(copyText).then(() => {
+                const box = document.getElementById("ipBox");
+                const originalHtml = box.innerHTML;
+                const msg = currentLang === 'en' ? "IP & PORT COPIED!" : "¡IP Y PUERTO COPIADOS!";
+                box.innerHTML = `<div class='ip-text' style='color: var(--mc-green); text-align: center; font-size: 20px;'>${msg}</div>`;
+                setTimeout(() => { box.innerHTML = originalHtml; }, 2000);
+            });
+        }
+
+        /* === 4. Live Server Status === */
+        async function fetchServerStatus() {
+            try {
+                const response = await fetch('https://api.mcsrvstat.us/bedrock/3/vanillaminecraft.dat.gg:17475');
+                const data = await response.json();
+                
+                const statusDot = document.getElementById('status-dot');
+                const statusText = document.getElementById('status-text');
+                const playersText = document.getElementById('player-count');
+
+                if (data.online) {
+                    statusDot.className = 'status-dot online';
+                    statusText.setAttribute('data-en', 'ONLINE');
+                    statusText.setAttribute('data-es', 'EN LÍNEA');
+                    playersText.setAttribute('data-en', `- Players: ${data.players.online}/${data.players.max}`);
+                    playersText.setAttribute('data-es', `- Jugadores: ${data.players.online}/${data.players.max}`);
+                } else {
+                    statusDot.className = 'status-dot offline';
+                    statusText.setAttribute('data-en', 'OFFLINE');
+                    statusText.setAttribute('data-es', 'DESCONECTADO');
+                    playersText.setAttribute('data-en', '');
+                    playersText.setAttribute('data-es', '');
+                }
+                changeLang(currentLang);
+            } catch (error) {
+                document.getElementById('status-text').setAttribute('data-en', 'ERROR');
+                document.getElementById('status-text').setAttribute('data-es', 'ERROR');
+                document.getElementById('status-dot').className = 'status-dot offline';
+                changeLang(currentLang);
+            }
+        }
+        fetchServerStatus();
+        setInterval(fetchServerStatus, 60000);
+
+        /* === 5. Scroll Reveal Animation === */
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight;
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                var elementVisible = 100;
+                if (elementTop < windowHeight - elementVisible) {
+                    reveals[i].classList.add("active");
+                }
+            }
+        }
+        window.addEventListener("scroll", reveal);
+        reveal(); // Trigger on load
+
+        /* === 6. Gallery Carousel & Auto-play Logic === */
+        const track = document.getElementById('carousel-track');
+        const nextBtn = document.getElementById('carousel-next');
+        const prevBtn = document.getElementById('carousel-prev');
+        const dots = Array.from(document.getElementById('carousel-indicators').children);
+        const galleryPanel = document.getElementById('gallery-panel');
+        const toggleGalleryBtn = document.getElementById('toggle-gallery');
+        const carouselWrapper = document.querySelector('.carousel-wrapper');
+        
+        let autoSlideInterval;
+
+        const updateDots = () => {
+            const index = Math.round(track.scrollLeft / track.clientWidth);
+            dots.forEach(dot => dot.classList.remove('active'));
+            if (dots[index]) dots[index].classList.add('active');
+        };
+
+        const slideNext = () => {
+            const maxScroll = track.scrollWidth - track.clientWidth;
+            if (track.scrollLeft >= maxScroll - 10) {
+                // Kembali ke awal seketika
+                track.scrollTo({ left: 0, behavior: 'auto' }); 
+            } else {
+                track.scrollBy({ left: track.clientWidth, behavior: 'smooth' });
+            }
+        };
+
+        const stopAutoSlide = () => {
+            clearInterval(autoSlideInterval);
+        };
+
+        const startAutoSlide = () => {
+            // CRITICAL FIX: Pastikan timer yang lama dihapus dulu agar tidak bertumpuk dan jadi ngebut
+            stopAutoSlide(); 
+            // Tunggu pas 5 detik (5000ms) untuk setiap foto
+            autoSlideInterval = setInterval(slideNext, 5000); 
+        };
+
+        // --- BERHENTI SAAT DI-HOVER / DISENTUH ---
+        carouselWrapper.addEventListener('mouseenter', stopAutoSlide);
+        carouselWrapper.addEventListener('mouseleave', () => {
+            if (!galleryPanel.classList.contains('expanded')) startAutoSlide();
+        });
+        
+        carouselWrapper.addEventListener('touchstart', stopAutoSlide);
+        carouselWrapper.addEventListener('touchend', () => {
+            if (!galleryPanel.classList.contains('expanded')) startAutoSlide();
+        });
+
+        track.addEventListener('scroll', updateDots);
+
+        nextBtn.addEventListener('click', () => {
+            stopAutoSlide(); 
+            slideNext();
+            startAutoSlide(); 
+        });
+
+        prevBtn.addEventListener('click', () => {
+            stopAutoSlide();
+            track.scrollBy({ left: -track.clientWidth, behavior: 'smooth' });
+            startAutoSlide();
+        });
+
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => {
+                stopAutoSlide();
+                track.scrollTo({ left: track.clientWidth * index, behavior: 'smooth' });
+                startAutoSlide();
+            });
+        });
+
+        // Initialize Carousel
+        startAutoSlide();
+
+        /* === 7. Gallery Toggle (Pinterest Mode) === */
+        toggleGalleryBtn.addEventListener('click', () => {
+            galleryPanel.classList.toggle('expanded');
+            
+            if (galleryPanel.classList.contains('expanded')) {
+                // Changed to Masonry View
+                toggleGalleryBtn.setAttribute('data-en', '🖼️ MINIMIZE');
+                toggleGalleryBtn.setAttribute('data-es', '🖼️ MINIMIZAR');
+                stopAutoSlide(); 
+            } else {
+                // Changed back to Carousel
+                toggleGalleryBtn.setAttribute('data-en', '🖼️ EXPAND GRID');
+                toggleGalleryBtn.setAttribute('data-es', '🖼️ EXPANDIR RED');
+                track.scrollTo({ left: 0 }); // reset scroll
+                updateDots();
+                startAutoSlide();
+            }
+            changeLang(currentLang); // Refresh text
+        });
+    </script>
+</body>
+</html>
