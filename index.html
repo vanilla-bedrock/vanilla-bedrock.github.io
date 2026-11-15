@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vanilla Bedrock Enhanced - Dedicated Server</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" media="print" onload="this.onload=null; this.media='all';">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet"></noscript>
 
     <style>
         /* === VARIABLES & RESET === */
@@ -38,33 +39,40 @@
             scroll-behavior: smooth;
         }
 
-        /* === PRELOADER === */
         #preloader {
             position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            inset: 0;
             z-index: 9999;
-            transition: opacity 0.5s ease;
-        }
-        .loader-logo {
-            width: 120px;
-            margin-bottom: 20px;
-            animation: pulse-glow 1.5s infinite alternate;
-        }
-        .loading-text {
-            font-family: 'Press Start 2P', cursive;
+            display: grid;
+            place-content: center;
+            justify-items: center;
+            gap: 20px;
+            background: #000;
             color: var(--mc-green);
-            font-size: 14px;
-            animation: blink 1s infinite;
+            font-family: 'Press Start 2P', monospace;
+            font-size: clamp(11px, 3vw, 14px);
+            text-align: center;
+            pointer-events: none;
+            animation: page-intro 650ms ease-out forwards;
         }
-        @keyframes pulse-glow {
-            0% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(85,255,85,0.2)); }
-            100% { transform: scale(1.05); filter: drop-shadow(0 0 25px rgba(85,255,85,0.8)); }
+
+        .loader-block {
+            width: 58px;
+            height: 58px;
+            background: linear-gradient(#55aa35 0 28%, #805031 28%);
+            border: 4px solid #382419;
+            box-shadow: inset -7px -7px #0003, 0 0 16px #55ff5555;
         }
+
+        @keyframes page-intro {
+            0%, 60% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #preloader { display: none; }
+        }
+
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
         /* === HEADER === */
@@ -555,10 +563,9 @@
 </head>
 <body>
 
-    <!-- PRELOADER -->
-    <div id="preloader">
-        <img src="logo.png" alt="Loading" class="loader-logo" onerror="this.src='https://minecraft.wiki/images/Grass_Block.png';">
-        <div class="loading-text tr" data-en="GENERATING WORLD..." data-es="GENERANDO MUNDO...">GENERATING WORLD...</div>
+    <div id="preloader" aria-hidden="true">
+        <div class="loader-block"></div>
+        <div>GENERATING WORLD...</div>
     </div>
 
     <!-- LANGUAGE SWITCHER -->
@@ -573,7 +580,7 @@
     <!-- HERO SECTION -->
     <section class="hero">
         <header class="site-header">
-            <img src="logo.png" alt="Logo" onerror="this.src='https://minecraft.wiki/images/Grass_Block.png';">
+            <img src="logo.png" alt="Logo" onerror="this.onerror=null; this.src='https://minecraft.wiki/images/Grass_Block.png';">
             <div class="brand">
                 VANILLA BEDROCK
                 <span>ENHANCED</span>
@@ -593,7 +600,7 @@
 
             <div class="paid-alert">
                 <span>💎</span>
-                <div class="tr" data-en="PAID FOR UNTIL ~ JUNE 7TH 2028" data-es="PAGADO HASTA ~ 7 DE JUNIO DE 2028">PAID FOR UNTIL ~ JUNE 7TH 2027</div>
+                <div class="tr" data-en="PAID FOR UNTIL ~ JUNE 7TH 2027" data-es="PAGADO HASTA ~ 7 DE JUNIO DE 2027">PAID FOR UNTIL ~ JUNE 7TH 2027</div>
             </div>
 
             <div class="status-badge">
@@ -617,7 +624,7 @@
             </div>
 
             <div class="btn-group">
-                <a href="https://vanilla-bedrock.github.io/" target="_blank" class="btn">
+                <a href="https://www.thevanillabedrock.online/" target="_blank" class="btn">
                     🌐 <span class="tr" data-en="Visit Website" data-es="Visitar Sitio Web">Visit Website</span>
                 </a>
                 <a href="https://discord.gg/2yVmVFewJp" target="_blank" class="btn discord">
@@ -887,18 +894,13 @@
                 <strong class="tr" data-en="THRIVE TOGETHER." data-es="PROSPEREN JUNTOS.">THRIVE TOGETHER.</strong>
             </div>
         </div>
+        <p style="text-align: center; margin: 1rem 0 0;">
+            <span class="tr" data-en="Server status provided by" data-es="Estado del servidor proporcionado por">Server status provided by</span>
+            <a href="https://www.minecraftpinger.com/" target="_blank" rel="noopener noreferrer">MinecraftPinger</a>
+        </p>
     </footer>
 
     <script>
-        /* === 1. Preloader === */
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const preloader = document.getElementById('preloader');
-                preloader.style.opacity = '0';
-                setTimeout(() => { preloader.style.display = 'none'; }, 500);
-            }, 1000);
-        });
-
         /* === 2. Language Switcher === */
         let currentLang = 'en';
         function setLang(lang) {
@@ -909,14 +911,10 @@
         }
         function changeLang(lang) {
             document.querySelectorAll('.tr').forEach(el => {
-                if (el.getAttribute(`data-${lang}`)) {
+                if (el.hasAttribute(`data-${lang}`)) {
                     el.innerHTML = el.getAttribute(`data-${lang}`);
                 }
             });
-            const statusText = document.getElementById('status-text');
-            if(statusText.innerHTML.includes('CONNECTING') || statusText.innerHTML.includes('CONECTANDO')) {
-                statusText.innerHTML = lang === 'en' ? 'CONNECTING...' : 'CONECTANDO...';
-            }
         }
 
         /* === 3. Copy IP === */
@@ -932,34 +930,55 @@
         }
 
         /* === 4. Live Server Status === */
-        async function fetchServerStatus() {
-            try {
-                const response = await fetch('https://api.mcsrvstat.us/bedrock/3/vanillaminecraft.dat.gg:17475');
-                const data = await response.json();
-                
-                const statusDot = document.getElementById('status-dot');
-                const statusText = document.getElementById('status-text');
-                const playersText = document.getElementById('player-count');
+        const serverAddress = 'vanillaminecraft.dat.gg:17475';
 
-                if (data.online) {
-                    statusDot.className = 'status-dot online';
-                    statusText.setAttribute('data-en', 'ONLINE');
-                    statusText.setAttribute('data-es', 'EN LÍNEA');
-                    playersText.setAttribute('data-en', `- Players: ${data.players.online}/${data.players.max}`);
-                    playersText.setAttribute('data-es', `- Jugadores: ${data.players.online}/${data.players.max}`);
-                } else {
-                    statusDot.className = 'status-dot offline';
-                    statusText.setAttribute('data-en', 'OFFLINE');
-                    statusText.setAttribute('data-es', 'DESCONECTADO');
-                    playersText.setAttribute('data-en', '');
-                    playersText.setAttribute('data-es', '');
+        async function fetchStatusJson(url) {
+            const response = await fetch(url, { signal: AbortSignal.timeout(12000) });
+            if (!response.ok) throw new Error(`Status request failed (${response.status})`);
+            return response.json();
+        }
+
+        async function lookupServerStatus() {
+            let netherNetUnreachable = false;
+            try {
+                const data = await fetchStatusJson(`https://www.minecraftpinger.com/api/v1/${serverAddress}`);
+                if (data?.message === 'ok' && data.server?.edition === 'bedrock') {
+                    return { state: 'online', players: data.server.players };
                 }
-                changeLang(currentLang);
-            } catch (error) {
-                document.getElementById('status-text').setAttribute('data-en', 'ERROR');
-                document.getElementById('status-text').setAttribute('data-es', 'ERROR');
-                document.getElementById('status-dot').className = 'status-dot offline';
-                changeLang(currentLang);
+                netherNetUnreachable = data?.message === 'ok' && data.server === null;
+            } catch {}
+
+            try {
+                const data = await fetchStatusJson(`https://api.mcsrvstat.us/bedrock/3/${serverAddress}`);
+                if (data?.online === true) return { state: 'online', players: data.players };
+                if (netherNetUnreachable && data?.online === false) return { state: 'unreachable' };
+            } catch {}
+            return { state: 'unknown' };
+        }
+
+        async function fetchServerStatus() {
+            const { state, players } = await lookupServerStatus();
+            const statusDot = document.getElementById('status-dot');
+            const statusText = document.getElementById('status-text');
+            const playersText = document.getElementById('player-count');
+            const labels = {
+                online: ['ONLINE', 'EN LÍNEA'],
+                unreachable: ['UNREACHABLE', 'INACCESIBLE'],
+                unknown: ['STATUS UNKNOWN', 'ESTADO DESCONOCIDO']
+            };
+            const [englishStatus, spanishStatus] = labels[state];
+            statusDot.className = state === 'unknown' ? 'status-dot' : `status-dot ${state === 'online' ? 'online' : 'offline'}`;
+            statusText.setAttribute('data-en', englishStatus);
+            statusText.setAttribute('data-es', spanishStatus);
+
+            const hasCount = Number.isSafeInteger(players?.online) && players.online >= 0;
+            const hasMax = Number.isSafeInteger(players?.max) && players.max >= 0;
+            const count = hasCount ? `${players.online}${hasMax ? `/${players.max}` : ''}` : '';
+            playersText.setAttribute('data-en', hasCount ? `- Players: ${count}` : '');
+            playersText.setAttribute('data-es', hasCount ? `- Jugadores: ${count}` : '');
+
+            for (const el of [statusText, playersText]) {
+                el.textContent = el.getAttribute(`data-${currentLang}`);
             }
         }
         fetchServerStatus();
