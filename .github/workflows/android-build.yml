@@ -1,0 +1,64 @@
+name: Build Vanilla Bedrock Android app
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/android-pwa]
+    paths:
+      - 'settings.gradle'
+      - 'build.gradle'
+      - 'gradle.properties'
+      - 'app/**'
+      - '.github/workflows/android-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build APK and Google Play AAB
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Configure optional release signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && [ -n "$ANDROID_KEY_ALIAS" ] && [ -n "$ANDROID_KEY_PASSWORD" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vanilla-bedrock-release.jks"
+            echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/vanilla-bedrock-release.jks" >> "$GITHUB_ENV"
+            echo "Release signing secrets detected."
+          else
+            echo "Release signing secrets are not configured. The AAB will be unsigned; the debug APK will still be installable for testing."
+          fi
+
+      - name: Build debug APK and release outputs
+        run: |
+          gradle --no-daemon assembleDebug assembleRelease bundleRelease
+
+      - name: Upload Android build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vanilla-bedrock-android-${{ github.run_number }}
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+          retention-days: 30
