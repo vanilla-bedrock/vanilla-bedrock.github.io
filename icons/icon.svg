@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="72" fill="#121212"/>
+  <path d="M72 154 256 58l184 96-184 96z" fill="#55aa35" stroke="#17230f" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M72 154v204l184 96V250z" fill="#805031" stroke="#17230f" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M440 154v204l-184 96V250z" fill="#5c3928" stroke="#17230f" stroke-width="12" stroke-linejoin="round"/>
+  <path d="m72 154 184 96 184-96" fill="none" stroke="#a5df65" stroke-width="10"/>
+  <path d="M256 250v204" stroke="#342016" stroke-width="10"/>
+  <path d="m124 179 42 22m-42 17 42 22m204-61-42 22m42 17-42 22" stroke="#b87b4e" stroke-width="10" stroke-linecap="square"/>
+  <text x="256" y="330" text-anchor="middle" font-family="monospace" font-size="52" font-weight="900" fill="#fff" stroke="#121212" stroke-width="8" paint-order="stroke">VB</text>
+  <text x="256" y="384" text-anchor="middle" font-family="monospace" font-size="22" font-weight="bold" fill="#ffaa00">BEDROCK</text>
+</svg>
