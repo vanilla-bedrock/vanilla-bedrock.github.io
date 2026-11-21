@@ -7,7 +7,7 @@ def hasReleaseSigning = releaseKeystore != null && !releaseKeystore.isBlank()
 
 android {
     namespace 'com.vanillabedrock.app'
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         applicationId 'com.vanillabedrock.app'
