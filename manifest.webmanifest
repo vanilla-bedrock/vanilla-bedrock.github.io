@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "Vanilla Bedrock",
+  "short_name": "Vanilla Bedrock",
+  "description": "Vanilla Bedrock Enhanced Minecraft Bedrock community server.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "lang": "en",
+  "categories": [
+    "games",
+    "social"
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
