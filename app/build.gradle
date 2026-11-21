@@ -1,0 +1,47 @@
+plugins {
+    id 'com.android.application'
+}
+
+def releaseKeystore = System.getenv("ANDROID_KEYSTORE_PATH")
+def hasReleaseSigning = releaseKeystore != null && !releaseKeystore.isBlank()
+
+android {
+    namespace 'com.vanillabedrock.app'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.vanillabedrock.app'
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName '1.0.0'
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                storeFile file(releaseKeystore)
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
+        }
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+        }
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
+}
