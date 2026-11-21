@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vanilla Bedrock Enhanced - Dedicated Server</title>
+    <meta name="theme-color" content="#121212">
+    <meta name="description" content="Join Vanilla Bedrock Enhanced, a community survival Minecraft Bedrock server.">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+    <link rel="apple-touch-icon" href="/icons/icon.svg">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" media="print" onload="this.onload=null; this.media='all';">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet"></noscript>
@@ -1092,6 +1100,16 @@
             }
             changeLang(currentLang); // Refresh text
         });
+    </script>
+
+    <script>
+        // Register the app service worker only on supported secure origins.
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                    .catch(error => console.warn('App offline support could not be enabled:', error));
+            });
+        }
     </script>
 </body>
 </html>
